@@ -11,6 +11,7 @@ const postCommentTemplate = postModal.querySelector('.social__comment');
 const postCommentsList = postModal.querySelector('.social__comments');
 const postCommentsLoader = postModal.querySelector('.social__comments-loader');
 const postCommentsShownCount = postModal.querySelector('.social__comment-shown-count');
+const postCommentsLoaderStep = 5;
 
 const onDocumentKeydown = (evt) => {
   if (isEscapeKey(evt)) {
@@ -20,19 +21,19 @@ const onDocumentKeydown = (evt) => {
 };
 
 const showNextComments = () => {
-  let loadStep;
+  let currentStep;
 
-  if (postCommentFragment.children.length <= 5) {
-    loadStep = postCommentFragment.children.length;
+  if (postCommentFragment.children.length <= postCommentsLoaderStep) {
+    currentStep = postCommentFragment.children.length;
     postCommentsLoader.classList.add('hidden');
   } else {
-    loadStep = 5;
+    currentStep = postCommentsLoaderStep;
     postCommentsLoader.classList.remove('hidden');
   }
 
-  while (loadStep > 0) {
+  while (currentStep > 0) {
     postCommentsList.append(postCommentFragment.children[0]);
-    loadStep -= 1;
+    currentStep -= 1;
   }
 
   postCommentsShownCount.textContent = postCommentsList.children.length;

@@ -8,4 +8,6 @@ const getRandomValue = (array = []) => array[getRandomNumber(0, array.length - 1
 
 const isEscapeKey = (evt) => evt.key === 'Escape';
 
-export {getRandomNumber, getRandomValue, isEscapeKey};
+const stopEventPropagation = (evt) => evt.stopPropagation();
+
+export {getRandomNumber, getRandomValue, isEscapeKey, stopEventPropagation};
