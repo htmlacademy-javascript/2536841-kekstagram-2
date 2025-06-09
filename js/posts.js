@@ -1,32 +1,30 @@
-import {onPostOpen} from './viewPost.js';
+import {postOpen} from './viewPost.js';
 
 const template = document.querySelector('#picture').content.querySelector('.picture');
 const list = document.querySelector('.pictures');
 const fragment = document.createDocumentFragment();
 
-const createNewPost = (post) => {
-  const {url, description, likes, comments} = post;
-  const newPost = template.cloneNode(true);
+const createPost = (data = {}) => {
+  const {url, description, likes, comments} = data;
+  const post = template.cloneNode(true);
 
-  const image = newPost.querySelector('.picture__img');
-  image.src = url;
-  image.alt = description;
+  const img = post.querySelector('.picture__img');
+  img.src = url;
+  img.alt = description;
 
-  newPost.querySelector('.picture__likes').textContent = likes;
-  newPost.querySelector('.picture__comments').textContent = comments.length;
+  post.querySelector('.picture__likes').textContent = likes;
+  post.querySelector('.picture__comments').textContent = comments.length;
 
-  newPost.addEventListener('click', (evt) => {
+  post.addEventListener('click', (evt) => {
     evt.preventDefault();
-    onPostOpen(post);
+    postOpen(data);
   });
 
-  return newPost;
+  return post;
 };
 
-const renderPosts = (postsArray = []) => {
-  postsArray.forEach((postsArrayItem) => {
-    fragment.append(createNewPost(postsArrayItem));
-  });
+const renderPosts = (posts = []) => {
+  posts.forEach((post) => fragment.append(createPost(post)));
   list.append(fragment);
 };
 

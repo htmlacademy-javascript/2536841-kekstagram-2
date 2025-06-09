@@ -1,99 +1,93 @@
 import {isEscapeKey} from './utils.js';
 
+const COMMENTS_LOADER_STEP = 5;
+
 const body = document.querySelector('body');
+const modal = body.querySelector('.big-picture');
+const modalClose = modal.querySelector('.big-picture__cancel');
+const img = modal.querySelector('.big-picture__img img');
 
-const postModal = body.querySelector('.big-picture');
-const postModalClose = postModal.querySelector('.big-picture__cancel');
-const postImage = postModal.querySelector('.big-picture__img img');
-
-const postCommentFragment = document.createDocumentFragment();
-const postCommentTemplate = postModal.querySelector('.social__comment');
-const postCommentsList = postModal.querySelector('.social__comments');
-const postCommentsLoader = postModal.querySelector('.social__comments-loader');
-const postCommentsShownCount = postModal.querySelector('.social__comment-shown-count');
-const postCommentsLoaderStep = 5;
+const commentsFragment = document.createDocumentFragment();
+const commentsList = modal.querySelector('.social__comments');
+const commentsLoader = modal.querySelector('.social__comments-loader');
+const commentsTemplate = commentsList.querySelector('.social__comment');
+const commentsShownCount = modal.querySelector('.social__comment-shown-count');
 
 const onDocumentKeydown = (evt) => {
   if (isEscapeKey(evt)) {
     evt.preventDefault();
-    closePostModal();
+    closeModal();
   }
 };
 
-const showNextComments = () => {
-  let currentStep;
+const loadNextComments = () => {
+  let step;
 
-  if (postCommentFragment.children.length <= postCommentsLoaderStep) {
-    currentStep = postCommentFragment.children.length;
-    postCommentsLoader.classList.add('hidden');
+  if (commentsFragment.children.length <= COMMENTS_LOADER_STEP) {
+    step = commentsFragment.children.length;
+    commentsLoader.classList.add('hidden');
   } else {
-    currentStep = postCommentsLoaderStep;
-    postCommentsLoader.classList.remove('hidden');
+    step = COMMENTS_LOADER_STEP;
+    commentsLoader.classList.remove('hidden');
   }
 
-  while (currentStep > 0) {
-    postCommentsList.append(postCommentFragment.children[0]);
-    currentStep -= 1;
+  while (step > 0) {
+    commentsList.append(commentsFragment.children[0]);
+    step -= 1;
   }
 
-  postCommentsShownCount.textContent = postCommentsList.children.length;
+  commentsShownCount.textContent = commentsList.children.length;
 };
 
-function openPostModal() {
+function openModal() {
   body.classList.add('modal-open');
-  postModal.classList.remove('hidden');
+  modal.classList.remove('hidden');
 
-  postModalClose.addEventListener('click', closePostModal);
+  modalClose.addEventListener('click', closeModal);
   document.addEventListener('keydown', onDocumentKeydown);
 }
 
-function closePostModal() {
+function closeModal() {
   body.classList.remove('modal-open');
-  postModal.classList.add('hidden');
+  modal.classList.add('hidden');
 
-  postCommentFragment.replaceChildren();
-  postCommentsLoader.removeEventListener('click', showNextComments);
+  commentsFragment.replaceChildren();
+  commentsLoader.removeEventListener('click', loadNextComments);
 
-  postModalClose.removeEventListener('click', closePostModal);
+  modalClose.removeEventListener('click', closeModal);
   document.removeEventListener('keydown', onDocumentKeydown);
 }
 
-const createPostComment = ({avatar, message, name}) => {
-  const newComment = postCommentTemplate.cloneNode(true);
+const createComment = ({avatar, message, name}) => {
+  const comment = commentsTemplate.cloneNode(true);
 
-  const commentImage = newComment.querySelector('.social__picture');
-  commentImage.src = avatar;
-  commentImage.alt = name;
+  const commentImg = comment.querySelector('.social__picture');
+  commentImg.src = avatar;
+  commentImg.alt = name;
 
-  const commentMessage = newComment.querySelector('.social__text');
-  commentMessage.textContent = '';
-  message.forEach((item) => {
-    commentMessage.textContent += `${item } `;
-  });
+  comment.querySelector('.social__text').textContent = message;
 
-  return newComment;
+  return comment;
 };
 
-const showPostData = ({url, description, likes, comments}) => {
-  postImage.src = url;
-  postImage.alt = description;
+const showPost = ({url, description, likes, comments}) => {
+  img.src = url;
+  img.alt = description;
 
-  postModal.querySelector('.likes-count').textContent = likes;
-  postModal.querySelector('.social__caption').textContent = description;
-  postModal.querySelector('.social__comment-total-count').textContent = comments.length;
+  modal.querySelector('.likes-count').textContent = likes;
+  modal.querySelector('.social__caption').textContent = description;
+  modal.querySelector('.social__comment-total-count').textContent = comments.length;
 
-  postCommentsList.innerHTML = '';
-  comments.forEach((comment) => {
-    postCommentFragment.append(createPostComment(comment));
-  });
+  commentsList.innerHTML = '';
+  comments.forEach((comment) => commentsFragment.append(createComment(comment)));
 
-  showNextComments();
-  postCommentsLoader.addEventListener('click', showNextComments);
+  loadNextComments();
+  commentsLoader.addEventListener('click', loadNextComments);
 };
 
-const onPostOpen = (post) => {
-  showPostData(post);
-  openPostModal();
+const postOpen = (post) => {
+  showPost(post);
+  openModal();
 };
 
-export {onPostOpen};
+export {postOpen};

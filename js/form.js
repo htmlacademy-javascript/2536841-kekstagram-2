@@ -1,31 +1,32 @@
-import {isEscapeKey, stopEventPropagation} from './utils.js';
+import {isEscapeKey, stopEventPropagation, showMessage} from './utils.js';
+import {sendData} from './api.js';
 
 const MAX_QUANTITY = 5;
 const MAX_LENGTH = 140;
 const NO_EFFECTS = 'none';
 
 const body = document.querySelector('body');
-const loadForm = body.querySelector('.img-upload__form');
-const loadInput = loadForm.querySelector('.img-upload__input');
+const form = body.querySelector('.img-upload__form');
+const input = form.querySelector('.img-upload__input');
 
-const loadModal = loadForm.querySelector('.img-upload__overlay');
-const loadModalClose = loadModal.querySelector('.img-upload__cancel');
+const modal = form.querySelector('.img-upload__overlay');
+const modalClose = modal.querySelector('.img-upload__cancel');
 
-const loadItemSmaller = loadModal.querySelector('.scale__control--smaller');
-const loadItemBigger = loadModal.querySelector('.scale__control--bigger');
-const loadItemInput = loadModal.querySelector('.scale__control--value');
-const loadItemImage = loadModal.querySelector('.img-upload__preview img');
-const Scales = {
+const img = modal.querySelector('.img-upload__preview img');
+const scaleInput = modal.querySelector('.scale__control--value');
+const decreaseButton = modal.querySelector('.scale__control--smaller');
+const increaseButton = modal.querySelector('.scale__control--bigger');
+const Scale = {
   STEP: 25,
   MIN: 25,
   MAX: 100,
 };
 
-const loadItemRangeContainer = loadModal.querySelector('.img-upload__effect-level');
-const loadItemRange = loadItemRangeContainer.querySelector('.effect-level__slider');
-const loadItemEffectLevel = loadItemRangeContainer.querySelector('.effect-level__value');
-const loadItemEffects = loadModal.querySelectorAll('.effects__radio');
-const Effects = {
+const effectRangeContainer = modal.querySelector('.img-upload__effect-level');
+const effectInput = effectRangeContainer.querySelector('.effect-level__value');
+const effectRange = effectRangeContainer.querySelector('.effect-level__slider');
+const effects = modal.querySelectorAll('.effects__radio');
+const Settings = {
   chrome: {
     options: {
       range: {
@@ -88,37 +89,48 @@ const Effects = {
   },
 };
 
-const loadItemHashtags = loadModal.querySelector('.text__hashtags');
-const loadItemDescription = loadModal.querySelector('.text__description');
-const hashtagsFieldRegExp = /^#[a-zа-яё0-9]{1,19}$/i;
-const Errors = {
-  REGEXP: 'Хэштеги должны начинаться с #, быть длиной до 20 символов, разделяться пробелом и состоять из букв или цифр',
+const hashtagsInput = modal.querySelector('.text__hashtags');
+const descriptionInput = modal.querySelector('.text__description');
+const hashtagsRegExp = /^#[a-zа-яё0-9]{1,19}$/i;
+const Error = {
+  REG_EXP: 'Хэштеги должны начинаться с #, быть длиной до 20 символов, разделяться пробелом и состоять из букв или цифр',
   REPEAT: 'Хэштеги не должны повторяться',
   QUANTITY: `Не может быть больше ${MAX_QUANTITY} хэштегов`,
   LENGTH: `Длина комментария не может составлять больше ${MAX_LENGTH} символов`,
 };
 
+const submitButton = modal.querySelector('.img-upload__submit');
+const successTemplate = body.querySelector('#success').content.querySelector('.success');
+const errorTemplate = body.querySelector('#error').content.querySelector('.error');
+const SubmitButtonText = {
+  IDLE: 'Опубликовать',
+  SENDING: 'Публикую...'
+};
+
 const onDocumentKeydown = (evt) => {
   if (isEscapeKey(evt)) {
     evt.preventDefault();
-    closeLoadModal();
+    closeModal();
   }
 };
 
-const updateRangeOptions = (options) => loadItemRange.noUiSlider.updateOptions(options);
+const updateRangeOptions = (options) => effectRange.noUiSlider.updateOptions(options);
 
 let currentEffect = NO_EFFECTS;
 const resetLoadValues = () => {
-  loadInput.value = '';
+  input.value = '';
+  scaleInput.value = '100%';
+  hashtagsInput.value = '';
+  descriptionInput.value = '';
 
-  loadItemInput.value = '100%';
-  loadItemImage.style.transform = 'scale(1)';
+  img.style.transform = 'scale(1)';
+  img.className = '';
+  img.style.filter = NO_EFFECTS;
 
-  loadItemEffects[0].checked = true;
-  loadItemImage.className = '';
+  effectInput.value = '';
+  effects[0].checked = true;
   currentEffect = NO_EFFECTS;
-  loadItemImage.style.filter = NO_EFFECTS;
-  loadItemEffectLevel.value = '';
+
   updateRangeOptions({
     range: {
       min: 0,
@@ -127,55 +139,52 @@ const resetLoadValues = () => {
     start: 1,
     step: 0.1,
   });
-
-  loadItemHashtags.value = '';
-  loadItemDescription.value = '';
 };
 
-const transformLoadImage = (evt) => {
-  let value = Number(loadItemInput.value.replace(/\D+/g, ''));
-  if (evt.target === loadItemSmaller && value > Scales.MIN) {
-    value -= Scales.STEP;
-  } else if (evt.target === loadItemBigger && value < Scales.MAX) {
-    value += Scales.STEP;
+const scaleImage = (evt) => {
+  let value = Number(scaleInput.value.replace(/\D+/g, ''));
+  if (evt.target === decreaseButton && value > Scale.MIN) {
+    value -= Scale.STEP;
+  } else if (evt.target === increaseButton && value < Scale.MAX) {
+    value += Scale.STEP;
   }
-  loadItemInput.value = `${value}%`;
-  loadItemImage.style.transform = `scale(${value / 100})`;
+  scaleInput.value = `${value}%`;
+  img.style.transform = `scale(${value / 100})`;
 };
 
-function openLoadModal() {
+function openModal() {
   body.classList.add('modal-open');
-  loadModal.classList.remove('hidden');
+  modal.classList.remove('hidden');
 
-  loadModalClose.addEventListener('click', closeLoadModal);
+  modalClose.addEventListener('click', closeModal);
   document.addEventListener('keydown', onDocumentKeydown);
 
-  loadItemSmaller.addEventListener('click', transformLoadImage);
-  loadItemBigger.addEventListener('click', transformLoadImage);
-  loadItemHashtags.addEventListener('keydown', stopEventPropagation);
-  loadItemDescription.addEventListener('keydown', stopEventPropagation);
+  decreaseButton.addEventListener('click', scaleImage);
+  increaseButton.addEventListener('click', scaleImage);
+  hashtagsInput.addEventListener('keydown', stopEventPropagation);
+  descriptionInput.addEventListener('keydown', stopEventPropagation);
 
-  loadItemRangeContainer.classList.add('visually-hidden');
+  effectRangeContainer.classList.add('visually-hidden');
 }
 
-function closeLoadModal() {
+function closeModal() {
   body.classList.remove('modal-open');
-  loadModal.classList.add('hidden');
+  modal.classList.add('hidden');
 
   resetLoadValues();
 
-  loadModalClose.removeEventListener('click', closeLoadModal);
+  modalClose.removeEventListener('click', closeModal);
   document.removeEventListener('keydown', onDocumentKeydown);
 
-  loadItemSmaller.removeEventListener('click', transformLoadImage);
-  loadItemBigger.removeEventListener('click', transformLoadImage);
-  loadItemHashtags.removeEventListener('keydown', stopEventPropagation);
-  loadItemDescription.removeEventListener('keydown', stopEventPropagation);
+  decreaseButton.removeEventListener('click', scaleImage);
+  increaseButton.removeEventListener('click', scaleImage);
+  hashtagsInput.removeEventListener('keydown', stopEventPropagation);
+  descriptionInput.removeEventListener('keydown', stopEventPropagation);
 }
 
-loadInput.addEventListener('change', openLoadModal);
+input.addEventListener('change', openModal);
 
-noUiSlider.create(loadItemRange, {
+noUiSlider.create(effectRange, {
   range: {
     min: 0,
     max: 1,
@@ -196,31 +205,31 @@ noUiSlider.create(loadItemRange, {
   connect: 'lower',
 });
 
-const getCurrentEffect = () => `${Effects[currentEffect]?.style}(${loadItemEffectLevel.value}${Effects[currentEffect]?.unit})`;
+const getCurrentEffect = () => `${Settings[currentEffect]?.style}(${effectInput.value}${Settings[currentEffect]?.unit})`;
 
-loadItemRange.noUiSlider.on('update', () => {
-  loadItemEffectLevel.value = loadItemRange.noUiSlider.get();
-  loadItemImage.style.filter = getCurrentEffect();
+effectRange.noUiSlider.on('update', () => {
+  effectInput.value = effectRange.noUiSlider.get();
+  img.style.filter = getCurrentEffect();
 });
 
-loadItemEffects.forEach((effect) => {
+effects.forEach((effect) => {
   effect.addEventListener('change', () => {
-    loadItemImage.className = '';
+    img.className = '';
     currentEffect = effect.value;
 
     if (currentEffect === NO_EFFECTS) {
-      loadItemImage.style.filter = NO_EFFECTS;
-      loadItemRangeContainer.classList.add('visually-hidden');
+      img.style.filter = NO_EFFECTS;
+      effectRangeContainer.classList.add('visually-hidden');
       return;
     }
 
-    loadItemImage.classList.add(`effects__preview--${effect.value}`);
-    loadItemRangeContainer.classList.remove('visually-hidden');
-    updateRangeOptions(Effects[effect.value].options);
+    img.classList.add(`effects__preview--${effect.value}`);
+    effectRangeContainer.classList.remove('visually-hidden');
+    updateRangeOptions(Settings[effect.value].options);
   });
 });
 
-const pristine = new Pristine(loadForm, {
+const pristine = new Pristine(form, {
   classTo: 'img-upload__field-wrapper',
   errorClass: 'img-upload__field-wrapper--error',
   errorTextParent: 'img-upload__field-wrapper',
@@ -228,27 +237,25 @@ const pristine = new Pristine(loadForm, {
   errorTextClass: 'img-upload__error'
 });
 
-let validateHashtagsError;
-const getHashtagsError = () => validateHashtagsError;
+let hashtagsError;
+const getHashtagsError = () => hashtagsError;
 
 const validateHashtags = (value) => {
   if (!value) {
     return true;
   }
 
-  const normalizeValue = value.trim().toLowerCase();
-  const hashtagsList = normalizeValue.split(/\s+/);
-
+  const hashtagsList = value.trim().toLowerCase().split(/\s+/);
   if (hashtagsList.length > MAX_QUANTITY) {
-    validateHashtagsError = Errors.QUANTITY;
+    hashtagsError = Error.QUANTITY;
     return false;
   } else if (hashtagsList.length !== new Set(hashtagsList).size) {
-    validateHashtagsError = Errors.REPEAT;
+    hashtagsError = Error.REPEAT;
     return false;
   }
   for (let i = 0; i < hashtagsList.length; i++) {
-    if (!hashtagsFieldRegExp.test(hashtagsList[i])) {
-      validateHashtagsError = Errors.REGEXP;
+    if (!hashtagsRegExp.test(hashtagsList[i])) {
+      hashtagsError = Error.REG_EXP;
       return false;
     }
   }
@@ -258,10 +265,24 @@ const validateHashtags = (value) => {
 
 const validateDescription = (value) => value.length <= MAX_LENGTH;
 
-pristine.addValidator(loadItemHashtags, validateHashtags, getHashtagsError);
-pristine.addValidator(loadItemDescription, validateDescription, Errors.LENGTH);
+pristine.addValidator(hashtagsInput, validateHashtags, getHashtagsError);
+pristine.addValidator(descriptionInput, validateDescription, Error.LENGTH);
 
-loadForm.addEventListener('submit', (evt) => {
+form.addEventListener('submit', (evt) => {
   evt.preventDefault();
-  pristine.validate();
+
+  if (pristine.validate()) {
+    submitButton.disabled = true;
+    submitButton.textContent = SubmitButtonText.SENDING;
+    sendData(new FormData(form))
+      .then(() => {
+        closeModal();
+        showMessage('success', successTemplate.cloneNode(true));
+      })
+      .catch(() => showMessage('error', errorTemplate.cloneNode(true)))
+      .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = SubmitButtonText.IDLE;
+      });
+  }
 });
