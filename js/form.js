@@ -100,15 +100,15 @@ const Error = {
 };
 
 const submitButton = modal.querySelector('.img-upload__submit');
-const successTemplate = body.querySelector('#success').content.querySelector('.success');
-const errorTemplate = body.querySelector('#error').content.querySelector('.error');
+const successMessage = body.querySelector('#success').content.querySelector('.success').cloneNode(true);
+const errorMessage = body.querySelector('#error').content.querySelector('.error').cloneNode(true);
 const SubmitButtonText = {
   IDLE: 'Опубликовать',
   SENDING: 'Публикую...'
 };
 
 const onDocumentKeydown = (evt) => {
-  if (isEscapeKey(evt)) {
+  if (isEscapeKey(evt) && !evt.target.contains(errorMessage)) {
     evt.preventDefault();
     closeModal();
   }
@@ -277,9 +277,9 @@ form.addEventListener('submit', (evt) => {
     sendData(new FormData(form))
       .then(() => {
         closeModal();
-        showMessage('success', successTemplate.cloneNode(true));
+        showMessage('success', successMessage);
       })
-      .catch(() => showMessage('error', errorTemplate.cloneNode(true)))
+      .catch(() => showMessage('error', errorMessage))
       .finally(() => {
         submitButton.disabled = false;
         submitButton.textContent = SubmitButtonText.IDLE;
