@@ -20,11 +20,10 @@ const load = (route, method = Method.GET, type = Type.JSON, body = null) => fetc
       throw new Error();
     }
     return response.json();
-  })
-  .catch(() => showDataError());
+  });
 
 
-const getData = () => load(Route.GET_DATA);
+const getData = () => load(Route.GET_DATA).catch(() => showDataError());
 const sendData = (body) => load(Route.SEND_DATA, Method.POST, Type.FORM, body);
 
 export {getData, sendData};
