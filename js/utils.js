@@ -30,4 +30,32 @@ const showMessage = (type, element) => {
   element.querySelector(`.${type}__button`)?.addEventListener('click', () => element.remove());
 };
 
-export {isEscapeKey, stopEventPropagation, showDataError, showMessage};
+const getRandomNumber = (min = 0, max = 1) => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const getUniqueNumber = (min, max) => {
+  const previousValues = [];
+
+  return () => {
+    let currentValue = getRandomNumber(min, max);
+    while (previousValues.includes(currentValue)) {
+      currentValue = getRandomNumber(min, max);
+    }
+    previousValues.push(currentValue);
+    return currentValue;
+  };
+};
+
+const debounce = (cb, timeoutDelay = 500) => {
+  let timeoutId;
+
+  return (...rest) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => cb.apply(this, rest), timeoutDelay);
+  };
+};
+
+export {isEscapeKey, stopEventPropagation, showDataError, showMessage, getUniqueNumber, debounce};
