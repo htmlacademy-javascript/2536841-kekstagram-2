@@ -1,3 +1,4 @@
+const RERENDER_DELAY = 500;
 const ALERT_SHOW_TIME = 5000;
 
 const body = document.querySelector('body');
@@ -30,26 +31,15 @@ const showMessage = (type, element) => {
   element.querySelector(`.${type}__button`)?.addEventListener('click', () => element.remove());
 };
 
-const getRandomNumber = (min = 0, max = 1) => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [array[i], array[randomIndex]] = [array[randomIndex], array[i]];
+  }
+  return array;
 };
 
-const getUniqueNumber = (min, max) => {
-  const previousValues = [];
-
-  return () => {
-    let currentValue = getRandomNumber(min, max);
-    while (previousValues.includes(currentValue)) {
-      currentValue = getRandomNumber(min, max);
-    }
-    previousValues.push(currentValue);
-    return currentValue;
-  };
-};
-
-const debounce = (cb, timeoutDelay = 500) => {
+const debounce = (cb, timeoutDelay = RERENDER_DELAY) => {
   let timeoutId;
 
   return (...rest) => {
@@ -58,4 +48,4 @@ const debounce = (cb, timeoutDelay = 500) => {
   };
 };
 
-export {isEscapeKey, stopEventPropagation, showDataError, showMessage, getUniqueNumber, debounce};
+export {isEscapeKey, stopEventPropagation, showDataError, showMessage, shuffleArray, debounce};
