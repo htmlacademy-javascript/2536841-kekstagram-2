@@ -126,6 +126,7 @@ const resetLoadValues = () => {
   img.style.transform = 'scale(1)';
   img.className = '';
   img.style.filter = NO_EFFECTS;
+  img.src = '';
 
   effectInput.value = '';
   effects[0].checked = true;
@@ -155,6 +156,8 @@ const scaleImage = (evt) => {
 function openModal() {
   body.classList.add('modal-open');
   modal.classList.remove('hidden');
+
+  img.src = URL.createObjectURL(input.files[0]);
 
   modalClose.addEventListener('click', closeModal);
   document.addEventListener('keydown', onDocumentKeydown);
