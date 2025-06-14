@@ -1,3 +1,4 @@
+const RERENDER_DELAY = 500;
 const ALERT_SHOW_TIME = 5000;
 
 const body = document.querySelector('body');
@@ -30,4 +31,21 @@ const showMessage = (type, element) => {
   element.querySelector(`.${type}__button`)?.addEventListener('click', () => element.remove());
 };
 
-export {isEscapeKey, stopEventPropagation, showDataError, showMessage};
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [array[i], array[randomIndex]] = [array[randomIndex], array[i]];
+  }
+  return array;
+};
+
+const debounce = (cb, timeoutDelay = RERENDER_DELAY) => {
+  let timeoutId;
+
+  return (...rest) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => cb.apply(this, rest), timeoutDelay);
+  };
+};
+
+export {isEscapeKey, stopEventPropagation, showDataError, showMessage, shuffleArray, debounce};

@@ -28,4 +28,6 @@ const renderPosts = (posts = []) => {
   list.append(fragment);
 };
 
-export {renderPosts};
+const clearPosts = () => list.querySelectorAll('.picture').forEach((picture) => picture.remove());
+
+export {renderPosts, clearPosts};
