@@ -85,9 +85,9 @@ const showPost = ({url, description, likes, comments}) => {
   commentsLoader.addEventListener('click', loadNextComments);
 };
 
-const postOpen = (post) => {
+const openPost = (post) => {
   showPost(post);
   openModal();
 };
 
-export {postOpen};
+export {openPost};

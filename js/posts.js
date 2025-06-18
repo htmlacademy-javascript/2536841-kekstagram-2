@@ -1,4 +1,4 @@
-import {postOpen} from './viewPost.js';
+import {openPost} from './view-post.js';
 
 const template = document.querySelector('#picture').content.querySelector('.picture');
 const list = document.querySelector('.pictures');
@@ -17,7 +17,7 @@ const createPost = (data = {}) => {
 
   post.addEventListener('click', (evt) => {
     evt.preventDefault();
-    postOpen(data);
+    openPost(data);
   });
 
   return post;

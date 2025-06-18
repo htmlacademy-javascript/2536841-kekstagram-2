@@ -1,9 +1,10 @@
-import {isEscapeKey, stopEventPropagation, showMessage} from './utils.js';
+import {isEscapeKey, stopEventPropagation, showDataError, showMessage} from './utils.js';
 import {sendData} from './api.js';
 
 const MAX_QUANTITY = 5;
 const MAX_LENGTH = 140;
 const NO_EFFECTS = 'none';
+const FILE_TYPES = ['jpeg', 'jpg', 'png'];
 
 const body = document.querySelector('body');
 const form = body.querySelector('.img-upload__form');
@@ -26,6 +27,7 @@ const effectRangeContainer = modal.querySelector('.img-upload__effect-level');
 const effectInput = effectRangeContainer.querySelector('.effect-level__value');
 const effectRange = effectRangeContainer.querySelector('.effect-level__slider');
 const effects = modal.querySelectorAll('.effects__radio');
+const effectsPreviews = modal.querySelectorAll('.effects__preview');
 const Settings = {
   chrome: {
     options: {
@@ -97,6 +99,7 @@ const Error = {
   REPEAT: 'Хэштеги не должны повторяться',
   QUANTITY: `Не может быть больше ${MAX_QUANTITY} хэштегов`,
   LENGTH: `Длина комментария не может составлять больше ${MAX_LENGTH} символов`,
+  TYPE: 'Неверный тип файла',
 };
 
 const submitButton = modal.querySelector('.img-upload__submit');
@@ -106,6 +109,14 @@ const SubmitButtonText = {
   IDLE: 'Опубликовать',
   SENDING: 'Публикую...'
 };
+
+const pristine = new Pristine(form, {
+  classTo: 'img-upload__field-wrapper',
+  errorClass: 'img-upload__field-wrapper--error',
+  errorTextParent: 'img-upload__field-wrapper',
+  errorTextTag: 'div',
+  errorTextClass: 'img-upload__error'
+});
 
 const onDocumentKeydown = (evt) => {
   if (isEscapeKey(evt) && !evt.target.contains(errorMessage)) {
@@ -130,6 +141,9 @@ const resetLoadValues = () => {
 
   effectInput.value = '';
   effects[0].checked = true;
+  effectsPreviews.forEach((effectPreview) => {
+    effectPreview.style.backgroundImage = '';
+  });
   currentEffect = NO_EFFECTS;
 
   updateRangeOptions({
@@ -140,6 +154,8 @@ const resetLoadValues = () => {
     start: 1,
     step: 0.1,
   });
+
+  pristine.reset();
 };
 
 const scaleImage = (evt) => {
@@ -156,8 +172,6 @@ const scaleImage = (evt) => {
 function openModal() {
   body.classList.add('modal-open');
   modal.classList.remove('hidden');
-
-  img.src = URL.createObjectURL(input.files[0]);
 
   modalClose.addEventListener('click', closeModal);
   document.addEventListener('keydown', onDocumentKeydown);
@@ -185,7 +199,23 @@ function closeModal() {
   descriptionInput.removeEventListener('keydown', stopEventPropagation);
 }
 
-input.addEventListener('change', openModal);
+const uploadImage = () => {
+  const file = input.files[0];
+  const fileExt = file.name.toLowerCase().split('.').pop();
+  const isMatches = FILE_TYPES.includes(fileExt);
+  if (isMatches) {
+    const imageUrl = URL.createObjectURL(file);
+    img.src = imageUrl;
+    effectsPreviews.forEach((effectPreview) => {
+      effectPreview.style.backgroundImage = `url('${imageUrl}')`;
+    });
+    openModal();
+  } else {
+    showDataError(Error.TYPE);
+  }
+};
+
+input.addEventListener('change', uploadImage);
 
 noUiSlider.create(effectRange, {
   range: {
@@ -215,30 +245,22 @@ effectRange.noUiSlider.on('update', () => {
   img.style.filter = getCurrentEffect();
 });
 
-effects.forEach((effect) => {
-  effect.addEventListener('change', () => {
-    img.className = '';
-    currentEffect = effect.value;
+const changeEffect = (evt) => {
+  img.className = '';
+  currentEffect = evt.target.value;
 
-    if (currentEffect === NO_EFFECTS) {
-      img.style.filter = NO_EFFECTS;
-      effectRangeContainer.classList.add('visually-hidden');
-      return;
-    }
+  if (currentEffect === NO_EFFECTS) {
+    img.style.filter = NO_EFFECTS;
+    effectRangeContainer.classList.add('visually-hidden');
+    return;
+  }
 
-    img.classList.add(`effects__preview--${effect.value}`);
-    effectRangeContainer.classList.remove('visually-hidden');
-    updateRangeOptions(Settings[effect.value].options);
-  });
-});
+  img.classList.add(`effects__preview--${evt.target.value}`);
+  effectRangeContainer.classList.remove('visually-hidden');
+  updateRangeOptions(Settings[evt.target.value].options);
+};
 
-const pristine = new Pristine(form, {
-  classTo: 'img-upload__field-wrapper',
-  errorClass: 'img-upload__field-wrapper--error',
-  errorTextParent: 'img-upload__field-wrapper',
-  errorTextTag: 'div',
-  errorTextClass: 'img-upload__error'
-});
+effects.forEach((effect) => effect.addEventListener('change', changeEffect));
 
 let hashtagsError;
 const getHashtagsError = () => hashtagsError;

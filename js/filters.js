@@ -1,12 +1,14 @@
 import {debounce, shuffleArray} from './utils.js';
 import {renderPosts, clearPosts} from './posts.js';
 
-const showFilters = (posts = []) => {
-  const RANDOM_POSTS_COUNT = 10;
+const RANDOM_POSTS_COUNT = 10;
+const ACTIVE_BUTTON_CLASS = 'img-filters__button--active';
 
+const showFilters = (posts = []) => {
   const filters = document.querySelector('.img-filters');
-  const filtersForm = document.querySelector('.img-filters__form');
-  const filtersButtons = document.querySelectorAll('.img-filters__button');
+  filters.classList.remove('img-filters--inactive');
+
+  const filtersForm = filters.querySelector('.img-filters__form');
 
   const availableFilters = {
     'filter-default': posts.slice(),
@@ -14,7 +16,10 @@ const showFilters = (posts = []) => {
     'filter-discussed': posts.slice().sort((prevPost, nextPost) => nextPost.comments.length - prevPost.comments.length),
   };
 
-  const switchActiveFilter = (target) => filtersButtons.forEach((button) => button === target ? button.classList.add('img-filters__button--active') : button.classList.remove('img-filters__button--active'));
+  const switchActiveFilter = (target) => {
+    filtersForm.querySelector(`.${ACTIVE_BUTTON_CLASS}`).classList.remove(ACTIVE_BUTTON_CLASS);
+    target.classList.add(ACTIVE_BUTTON_CLASS);
+  };
 
   const setPostsFilter = debounce((evt) => {
     clearPosts();
@@ -22,13 +27,12 @@ const showFilters = (posts = []) => {
   });
 
   const onFilterClick = (evt) => {
-    if (!evt.target.classList.contains('img-filters__button--active')) {
+    if (!evt.target.classList.contains(ACTIVE_BUTTON_CLASS)) {
       switchActiveFilter(evt.target);
       setPostsFilter(evt);
     }
   };
 
-  filters.classList.remove('img-filters--inactive');
   filtersForm.addEventListener('click', onFilterClick);
 };
 
