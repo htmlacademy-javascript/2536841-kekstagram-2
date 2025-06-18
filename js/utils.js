@@ -2,14 +2,17 @@ const RERENDER_DELAY = 500;
 const ALERT_SHOW_TIME = 5000;
 
 const body = document.querySelector('body');
-const dataErrorTemplate = document.querySelector('#data-error').content.querySelector('.data-error');
+const dataErrorTemplate = body.querySelector('#data-error').content.querySelector('.data-error');
 
 const isEscapeKey = (evt) => evt.key === 'Escape';
 
 const stopEventPropagation = (evt) => evt.stopPropagation();
 
-const showDataError = () => {
+const showDataError = (errorText) => {
   const error = dataErrorTemplate.cloneNode(true);
+  if (errorText) {
+    error.querySelector('.data-error__title').textContent = errorText;
+  }
   body.append(error);
 
   setTimeout(() => error.remove(), ALERT_SHOW_TIME);
