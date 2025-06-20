@@ -6,7 +6,7 @@ const dataErrorTemplate = body.querySelector('#data-error').content.querySelecto
 
 const isEscapeKey = (evt) => evt.key === 'Escape';
 
-const stopEventPropagation = (evt) => evt.stopPropagation();
+const onInputKeydown = (evt) => evt.stopPropagation();
 
 const showDataError = (errorText) => {
   const error = dataErrorTemplate.cloneNode(true);
@@ -34,14 +34,6 @@ const showMessage = (type, element) => {
   element.querySelector(`.${type}__button`)?.addEventListener('click', () => element.remove());
 };
 
-const shuffleArray = (array) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const randomIndex = Math.floor(Math.random() * (i + 1));
-    [array[i], array[randomIndex]] = [array[randomIndex], array[i]];
-  }
-  return array;
-};
-
 const debounce = (cb, timeoutDelay = RERENDER_DELAY) => {
   let timeoutId;
 
@@ -51,4 +43,4 @@ const debounce = (cb, timeoutDelay = RERENDER_DELAY) => {
   };
 };
 
-export {isEscapeKey, stopEventPropagation, showDataError, showMessage, shuffleArray, debounce};
+export {isEscapeKey, onInputKeydown, showDataError, showMessage, debounce};

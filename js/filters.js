@@ -1,4 +1,4 @@
-import {debounce, shuffleArray} from './utils.js';
+import {debounce} from './utils.js';
 import {renderPosts, clearPosts} from './posts.js';
 
 const RANDOM_POSTS_COUNT = 10;
@@ -12,7 +12,7 @@ const showFilters = (posts = []) => {
 
   const availableFilters = {
     'filter-default': posts.slice(),
-    'filter-random': shuffleArray(posts.slice(0, RANDOM_POSTS_COUNT)),
+    'filter-random': posts.toSorted(() => 0.5 - Math.random()).slice(0, RANDOM_POSTS_COUNT),
     'filter-discussed': posts.slice().sort((prevPost, nextPost) => nextPost.comments.length - prevPost.comments.length),
   };
 

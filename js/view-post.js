@@ -16,11 +16,11 @@ const commentsShownCount = modal.querySelector('.social__comment-shown-count');
 const onDocumentKeydown = (evt) => {
   if (isEscapeKey(evt)) {
     evt.preventDefault();
-    closeModal();
+    onModalClose();
   }
 };
 
-const loadNextComments = () => {
+const onCommentsLoad = () => {
   let step;
 
   if (commentsFragment.children.length <= COMMENTS_LOADER_STEP) {
@@ -39,22 +39,22 @@ const loadNextComments = () => {
   commentsShownCount.textContent = commentsList.children.length;
 };
 
-function openModal() {
+const openModal = () => {
   body.classList.add('modal-open');
   modal.classList.remove('hidden');
 
-  modalClose.addEventListener('click', closeModal);
+  modalClose.addEventListener('click', onModalClose);
   document.addEventListener('keydown', onDocumentKeydown);
-}
+};
 
-function closeModal() {
+function onModalClose() {
   body.classList.remove('modal-open');
   modal.classList.add('hidden');
 
   commentsFragment.replaceChildren();
-  commentsLoader.removeEventListener('click', loadNextComments);
+  commentsLoader.removeEventListener('click', onCommentsLoad);
 
-  modalClose.removeEventListener('click', closeModal);
+  modalClose.removeEventListener('click', onModalClose);
   document.removeEventListener('keydown', onDocumentKeydown);
 }
 
@@ -81,8 +81,8 @@ const showPost = ({url, description, likes, comments}) => {
   commentsList.innerHTML = '';
   comments.forEach((comment) => commentsFragment.append(createComment(comment)));
 
-  loadNextComments();
-  commentsLoader.addEventListener('click', loadNextComments);
+  onCommentsLoad();
+  commentsLoader.addEventListener('click', onCommentsLoad);
 };
 
 const openPost = (post) => {
