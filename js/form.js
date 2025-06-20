@@ -1,10 +1,26 @@
-import {isEscapeKey, stopEventPropagation, showDataError, showMessage} from './utils.js';
+import {isEscapeKey, onInputKeydown, showDataError, showMessage} from './utils.js';
 import {sendData} from './api.js';
 
 const MAX_QUANTITY = 5;
 const MAX_LENGTH = 140;
 const NO_EFFECTS = 'none';
 const FILE_TYPES = ['jpeg', 'jpg', 'png'];
+const Scale = {
+  STEP: 25,
+  MIN: 25,
+  MAX: 100,
+};
+const Error = {
+  REG_EXP: 'Хэштеги должны начинаться с #, быть длиной до 20 символов, разделяться пробелом и состоять из букв или цифр',
+  REPEAT: 'Хэштеги не должны повторяться',
+  QUANTITY: `Не может быть больше ${MAX_QUANTITY} хэштегов`,
+  LENGTH: `Длина комментария не может составлять больше ${MAX_LENGTH} символов`,
+  TYPE: 'Неверный тип файла',
+};
+const SubmitButtonText = {
+  IDLE: 'Опубликовать',
+  SENDING: 'Публикую...'
+};
 
 const body = document.querySelector('body');
 const form = body.querySelector('.img-upload__form');
@@ -17,18 +33,13 @@ const img = modal.querySelector('.img-upload__preview img');
 const scaleInput = modal.querySelector('.scale__control--value');
 const decreaseButton = modal.querySelector('.scale__control--smaller');
 const increaseButton = modal.querySelector('.scale__control--bigger');
-const Scale = {
-  STEP: 25,
-  MIN: 25,
-  MAX: 100,
-};
 
 const effectRangeContainer = modal.querySelector('.img-upload__effect-level');
 const effectInput = effectRangeContainer.querySelector('.effect-level__value');
 const effectRange = effectRangeContainer.querySelector('.effect-level__slider');
 const effects = modal.querySelectorAll('.effects__radio');
 const effectsPreviews = modal.querySelectorAll('.effects__preview');
-const Settings = {
+const settings = {
   chrome: {
     options: {
       range: {
@@ -94,21 +105,10 @@ const Settings = {
 const hashtagsInput = modal.querySelector('.text__hashtags');
 const descriptionInput = modal.querySelector('.text__description');
 const hashtagsRegExp = /^#[a-zа-яё0-9]{1,19}$/i;
-const Error = {
-  REG_EXP: 'Хэштеги должны начинаться с #, быть длиной до 20 символов, разделяться пробелом и состоять из букв или цифр',
-  REPEAT: 'Хэштеги не должны повторяться',
-  QUANTITY: `Не может быть больше ${MAX_QUANTITY} хэштегов`,
-  LENGTH: `Длина комментария не может составлять больше ${MAX_LENGTH} символов`,
-  TYPE: 'Неверный тип файла',
-};
 
 const submitButton = modal.querySelector('.img-upload__submit');
 const successMessage = body.querySelector('#success').content.querySelector('.success').cloneNode(true);
 const errorMessage = body.querySelector('#error').content.querySelector('.error').cloneNode(true);
-const SubmitButtonText = {
-  IDLE: 'Опубликовать',
-  SENDING: 'Публикую...'
-};
 
 const pristine = new Pristine(form, {
   classTo: 'img-upload__field-wrapper',
@@ -121,7 +121,7 @@ const pristine = new Pristine(form, {
 const onDocumentKeydown = (evt) => {
   if (isEscapeKey(evt) && !evt.target.contains(errorMessage)) {
     evt.preventDefault();
-    closeModal();
+    onModalClose();
   }
 };
 
@@ -158,7 +158,7 @@ const resetLoadValues = () => {
   pristine.reset();
 };
 
-const scaleImage = (evt) => {
+const onImageScale = (evt) => {
   let value = Number(scaleInput.value.replace(/\D+/g, ''));
   if (evt.target === decreaseButton && value > Scale.MIN) {
     value -= Scale.STEP;
@@ -169,37 +169,37 @@ const scaleImage = (evt) => {
   img.style.transform = `scale(${value / 100})`;
 };
 
-function openModal() {
+const openModal = () => {
   body.classList.add('modal-open');
   modal.classList.remove('hidden');
 
-  modalClose.addEventListener('click', closeModal);
+  modalClose.addEventListener('click', onModalClose);
   document.addEventListener('keydown', onDocumentKeydown);
 
-  decreaseButton.addEventListener('click', scaleImage);
-  increaseButton.addEventListener('click', scaleImage);
-  hashtagsInput.addEventListener('keydown', stopEventPropagation);
-  descriptionInput.addEventListener('keydown', stopEventPropagation);
+  decreaseButton.addEventListener('click', onImageScale);
+  increaseButton.addEventListener('click', onImageScale);
+  hashtagsInput.addEventListener('keydown', onInputKeydown);
+  descriptionInput.addEventListener('keydown', onInputKeydown);
 
   effectRangeContainer.classList.add('visually-hidden');
-}
+};
 
-function closeModal() {
+function onModalClose() {
   body.classList.remove('modal-open');
   modal.classList.add('hidden');
 
   resetLoadValues();
 
-  modalClose.removeEventListener('click', closeModal);
+  modalClose.removeEventListener('click', onModalClose);
   document.removeEventListener('keydown', onDocumentKeydown);
 
-  decreaseButton.removeEventListener('click', scaleImage);
-  increaseButton.removeEventListener('click', scaleImage);
-  hashtagsInput.removeEventListener('keydown', stopEventPropagation);
-  descriptionInput.removeEventListener('keydown', stopEventPropagation);
+  decreaseButton.removeEventListener('click', onImageScale);
+  increaseButton.removeEventListener('click', onImageScale);
+  hashtagsInput.removeEventListener('keydown', onInputKeydown);
+  descriptionInput.removeEventListener('keydown', onInputKeydown);
 }
 
-const uploadImage = () => {
+const onInputChange = () => {
   const file = input.files[0];
   const fileExt = file.name.toLowerCase().split('.').pop();
   const isMatches = FILE_TYPES.includes(fileExt);
@@ -215,7 +215,7 @@ const uploadImage = () => {
   }
 };
 
-input.addEventListener('change', uploadImage);
+input.addEventListener('change', onInputChange);
 
 noUiSlider.create(effectRange, {
   range: {
@@ -238,14 +238,14 @@ noUiSlider.create(effectRange, {
   connect: 'lower',
 });
 
-const getCurrentEffect = () => `${Settings[currentEffect]?.style}(${effectInput.value}${Settings[currentEffect]?.unit})`;
+const getCurrentEffect = () => `${settings[currentEffect]?.style}(${effectInput.value}${settings[currentEffect]?.unit})`;
 
 effectRange.noUiSlider.on('update', () => {
   effectInput.value = effectRange.noUiSlider.get();
   img.style.filter = getCurrentEffect();
 });
 
-const changeEffect = (evt) => {
+const onEffectChange = (evt) => {
   img.className = '';
   currentEffect = evt.target.value;
 
@@ -257,10 +257,10 @@ const changeEffect = (evt) => {
 
   img.classList.add(`effects__preview--${evt.target.value}`);
   effectRangeContainer.classList.remove('visually-hidden');
-  updateRangeOptions(Settings[evt.target.value].options);
+  updateRangeOptions(settings[evt.target.value].options);
 };
 
-effects.forEach((effect) => effect.addEventListener('change', changeEffect));
+effects.forEach((effect) => effect.addEventListener('change', onEffectChange));
 
 let hashtagsError;
 const getHashtagsError = () => hashtagsError;
@@ -301,7 +301,7 @@ form.addEventListener('submit', (evt) => {
     submitButton.textContent = SubmitButtonText.SENDING;
     sendData(new FormData(form))
       .then(() => {
-        closeModal();
+        onModalClose();
         showMessage('success', successMessage);
       })
       .catch(() => showMessage('error', errorMessage))
