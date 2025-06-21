@@ -5,6 +5,7 @@ const MAX_QUANTITY = 5;
 const MAX_LENGTH = 140;
 const NO_EFFECTS = 'none';
 const FILE_TYPES = ['jpeg', 'jpg', 'png'];
+const HASHTAGS_REG_EXP = /^#[a-zа-яё0-9]{1,19}$/i;
 const Scale = {
   STEP: 25,
   MIN: 25,
@@ -104,7 +105,6 @@ const settings = {
 
 const hashtagsInput = modal.querySelector('.text__hashtags');
 const descriptionInput = modal.querySelector('.text__description');
-const hashtagsRegExp = /^#[a-zа-яё0-9]{1,19}$/i;
 
 const submitButton = modal.querySelector('.img-upload__submit');
 const successMessage = body.querySelector('#success').content.querySelector('.success').cloneNode(true);
@@ -279,7 +279,7 @@ const validateHashtags = (value) => {
     return false;
   }
   for (let i = 0; i < hashtagsList.length; i++) {
-    if (!hashtagsRegExp.test(hashtagsList[i])) {
+    if (!HASHTAGS_REG_EXP.test(hashtagsList[i])) {
       hashtagsError = Error.REG_EXP;
       return false;
     }
